@@ -1,0 +1,1263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="data:," />
+    <title>Rowan Stocks — your AI agent for tokenized stocks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+    <style>
+      /* ============================================================
+         BLUEPRINT / SCHEMATIC identity — Rowan Stocks drawn like an
+         engineering sheet: Base-blue field, fine white grid, paper
+         panels, technical mono annotations. No gradients, no glass.
+         ============================================================ */
+      :root {
+        --blue: #0052ff;
+        --blue-deep: #003ecb;
+        --blue-ink: #04184d;
+        --paper: #ffffff;
+        --paper-2: #edf2ff;
+        --ink: #101e4b;
+        --ink-2: #3d4e7a;
+        --ink-3: #68759c;
+        --line: #c9d6ff;
+        --line-mid: #9db8ff;
+        --on-blue-dim: rgba(255, 255, 255, 0.84);
+        --on-blue-faint: rgba(255, 255, 255, 0.62);
+        --up: #0b8a4b;
+        --up-soft: #e2f5ea;
+        --down: #d92d20;
+        --down-soft: #fdecea;
+        --yellow: #ffd60a;
+        --shadow: 8px 8px 0 var(--blue-ink);
+        --shadow-sm: 4px 4px 0 var(--blue-ink);
+        --radius: 14px;
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        color: #ffffff;
+        font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 15px;
+        line-height: 24px;
+        background-color: var(--blue);
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+          linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+        background-size: 140px 140px, 140px 140px, 28px 28px, 28px 28px;
+        background-position: center top;
+      }
+      ::selection { background: #ffffff; color: var(--blue); }
+      button, input, select { font: inherit; }
+      button, [role="button"], input:not([type="checkbox"], [type="radio"]) { min-height: 2.25rem; }
+      :focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+      .card :focus-visible, .stock :focus-visible, .does-item :focus-visible, .briefing-card :focus-visible { outline-color: var(--blue); }
+      .wrap { max-width: 1060px; margin: 0 auto; padding: 22px 18px 52px; }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+      /* ---------- Sheet furniture: coordinate bar ---------- */
+      .coord-bar {
+        display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        padding: 7px 12px; margin-bottom: 18px;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; letter-spacing: 0.14em;
+        color: var(--on-blue-dim); text-transform: uppercase;
+      }
+      .coord-bar .plus { color: var(--yellow); font-weight: 700; }
+      .coord-bar .spacer { flex: 1; }
+
+      /* ---------- Risk banner: stamped spec plate ---------- */
+      .risk {
+        background: var(--paper); color: var(--ink);
+        border: 2px solid var(--blue-ink);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 16px 18px 14px;
+        margin-bottom: 30px;
+        position: relative;
+      }
+      .risk::before {
+        content: ""; position: absolute; left: 0; right: 0; top: 0; height: 8px;
+        background: repeating-linear-gradient(-45deg, var(--blue) 0 10px, var(--yellow) 10px 20px);
+        border-bottom: 2px solid var(--blue-ink);
+      }
+      .risk strong {
+        color: var(--blue); display: block; font-size: 13px; font-weight: 500; margin: 8px 0 5px;
+        font-family: "IBM Plex Mono", monospace; letter-spacing: 0.04em; text-transform: uppercase;
+      }
+      .risk p { margin: 0; color: var(--ink); font-size: 15px; line-height: 24px; }
+      .risk p b { color: var(--blue-ink); }
+
+      /* ---------- Header: drawing title ---------- */
+      header.page-head { border-bottom: 1px solid rgba(255, 255, 255, 0.6); padding-bottom: 22px; }
+      .brand-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+      h1 {
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        font-size: clamp(34px, 6.5vw, 56px); line-height: 1; margin: 0;
+        font-weight: 700; letter-spacing: -0.03em; text-transform: uppercase; color: #ffffff;
+        font-variant-numeric: tabular-nums;
+      }
+      h1 .gold { color: transparent; -webkit-text-stroke: 2.5px var(--yellow); }
+      .tagline { color: var(--on-blue-dim); font-size: 15px; line-height: 24px; margin: 14px 0 0; max-width: 620px; font-weight: 500; }
+      .chain-pill {
+        display: inline-block; margin-top: 16px; padding: 7px 15px;
+        border: 1.5px solid rgba(255, 255, 255, 0.85); border-radius: 999px;
+        color: var(--on-blue-dim); font-size: 13px; font-weight: 500; background: transparent;
+        font-family: "IBM Plex Mono", monospace; letter-spacing: 0.03em;
+      }
+      .chain-pill b { color: #ffffff; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+      .dim-line {
+        margin-top: 14px; font-family: "IBM Plex Mono", monospace; font-size: 0.7rem;
+        letter-spacing: 0.14em; color: var(--on-blue-faint); text-transform: uppercase;
+      }
+
+      /* ---------- Sections ---------- */
+      section { margin-top: 38px; }
+      .sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+      h2 { font-family: "Space Grotesk", system-ui, sans-serif; font-size: clamp(34px, 5vw, 44px); line-height: 1; margin: 0; font-weight: 700; letter-spacing: -0.03em; text-transform: uppercase; color: #ffffff; display: flex; align-items: center; gap: 12px; font-variant-numeric: tabular-nums; }
+      h2 .num {
+        color: var(--blue-ink); background: var(--yellow); font-family: "IBM Plex Mono", monospace;
+        font-size: 0.74rem; font-weight: 700; letter-spacing: 0.1em; padding: 5px 10px; border-radius: 7px;
+        border: 2px solid var(--blue-ink); box-shadow: 3px 3px 0 var(--blue-ink);
+      }
+      h2 .num::before { content: "FIG. "; }
+      .sec-sub { color: var(--on-blue-dim); font-size: 15px; line-height: 24px; font-weight: 500; margin: 4px 0 16px; max-width: 720px; }
+      .card {
+        background: var(--paper); color: var(--ink);
+        border: 2.5px solid var(--blue-ink); border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 20px;
+      }
+
+      /* ---------- What the agent does ---------- */
+      .does-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+      .does-item {
+        background: var(--paper); color: var(--ink);
+        border: 2.5px solid var(--blue-ink); border-radius: var(--radius);
+        box-shadow: var(--shadow); padding: 16px;
+      }
+      .does-item .glyph {
+        display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 0.16em; color: var(--blue-ink); background: var(--yellow); border: 1.5px solid var(--blue-ink);
+        box-shadow: 2.5px 2.5px 0 var(--blue-ink);
+        padding: 3px 8px; border-radius: 6px; margin-bottom: 12px; line-height: 1.4;
+      }
+      .does-item h3 { font-family: "Space Grotesk", system-ui, sans-serif; margin: 0 0 5px; font-size: 15px; line-height: 1; font-weight: 700; letter-spacing: -0.03em; color: var(--blue-ink); }
+      .does-item p { margin: 0; color: var(--ink-2); font-size: 15px; line-height: 24px; }
+      @media (max-width: 760px) { .does-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 420px) { .does-grid { grid-template-columns: 1fr; } }
+
+      /* ---------- Buttons ---------- */
+      .btn {
+        appearance: none; border: 2px solid var(--blue-ink); background: var(--paper);
+        color: var(--blue); border-radius: 10px; padding: 8px 16px; cursor: pointer;
+        font-weight: 700; font-size: 0.86rem; min-height: 2.5rem;
+        font-family: "IBM Plex Mono", monospace; letter-spacing: 0.04em; text-transform: uppercase;
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+      }
+      .btn:hover:not(:disabled) { background: var(--paper-2); transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--blue-ink); }
+      .btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--blue-ink); }
+      .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .btn-gold { background: var(--blue); border-color: var(--blue-ink); color: #ffffff; }
+      .btn-gold:hover:not(:disabled) { background: var(--blue-deep); color: #ffffff; }
+      .board-tools .btn { border-color: var(--blue-ink); color: var(--blue-ink); background: var(--yellow); }
+      .board-tools .btn:hover:not(:disabled) { background: #ffffff; color: var(--blue-ink); }
+
+      /* ---------- Market board ---------- */
+      .board-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+      .updated { color: var(--on-blue-dim); font-size: 13px; font-weight: 500; font-family: "IBM Plex Mono", monospace; letter-spacing: 0.05em; text-transform: uppercase; }
+      .board-status { color: #ffffff; font-size: 15px; line-height: 24px; padding: 22px 4px; text-align: center; font-family: "IBM Plex Mono", monospace; }
+      .board-status.error { color: var(--down); background: var(--paper); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+      .board-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+      @media (max-width: 820px) { .board-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 520px) { .board-grid { grid-template-columns: 1fr; } }
+      .stock {
+        background: var(--paper); color: var(--ink);
+        border: 2.5px solid var(--blue-ink); border-radius: var(--radius);
+        box-shadow: var(--shadow); padding: 15px 16px 24px; position: relative;
+      }
+      .stock::after {
+        content: "+"; position: absolute; right: 8px; bottom: 4px;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; color: var(--line-mid);
+      }
+      .stock-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+      .ticker { font-family: "Space Grotesk", system-ui, sans-serif; font-weight: 700; font-size: 15px; line-height: 1; letter-spacing: -0.03em; color: var(--blue-ink); font-variant-numeric: tabular-nums; }
+      .company { color: var(--ink-3); font-size: 13px; font-weight: 500; font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+      .chg { font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: 13px; padding: 3px 8px; border-radius: 2px; white-space: nowrap; border: 1px solid currentColor; font-variant-numeric: tabular-nums; }
+      .chg.up { color: var(--up); background: var(--up-soft); }
+      .chg.down { color: var(--down); background: var(--down-soft); }
+      .chg.flat { color: var(--ink-2); background: var(--paper-2); }
+      .price { font-family: "Space Grotesk", system-ui, sans-serif; font-size: clamp(32px, 3vw, 44px); line-height: 1; letter-spacing: -0.03em; font-weight: 700; margin: 10px 0 8px; color: var(--blue-ink); font-variant-numeric: tabular-nums; }
+      .stock-meta { display: flex; gap: 16px; flex-wrap: wrap; color: var(--ink-3); font-size: 13px; font-weight: 500; line-height: 24px; border-top: 1px dashed var(--line); padding-top: 9px; }
+      .stock-meta b { color: var(--ink); font-weight: 500; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+      .source-note { color: var(--on-blue-faint); font-size: 13px; font-weight: 500; line-height: 24px; margin-top: 14px; }
+      .source-note a { color: #ffffff; text-underline-offset: 3px; }
+
+      /* ---------- Briefing: agent spec sheet ---------- */
+      .briefing-card {
+        background: var(--paper); color: var(--ink);
+        border: 2.5px solid var(--blue-ink); border-radius: var(--radius);
+        box-shadow: var(--shadow); padding: 20px;
+      }
+      .briefing-meta {
+        color: var(--blue); font-size: 13px; font-weight: 500; letter-spacing: 0.1em;
+        font-family: "IBM Plex Mono", monospace; text-transform: uppercase;
+        border-bottom: 1.5px dashed var(--line-mid); padding-bottom: 10px; margin-bottom: 14px;
+      }
+      .briefing-body p { margin: 0 0 10px; font-size: 15px; line-height: 24px; color: var(--ink); }
+      .briefing-body p:last-child { margin-bottom: 0; }
+      .briefing-body .dim { color: var(--ink-2); }
+
+      /* ---------- Ask Rowan ---------- */
+      .ask-row { display: flex; gap: 10px; flex-wrap: wrap; }
+      .ask-row input {
+        flex: 1 1 200px; background: var(--paper-2); border: 1.5px solid var(--line-mid);
+        border-radius: 2px; color: var(--blue-ink); padding: 10px 14px;
+        font-family: "IBM Plex Mono", monospace; text-transform: uppercase; min-height: 2.75rem; font-weight: 600;
+      }
+      .ask-row input::placeholder { text-transform: none; font-family: "Space Grotesk", sans-serif; color: var(--ink-3); font-weight: 500; }
+      .ask-row input:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
+      .ask-result { margin-top: 16px; }
+      .ask-result:empty { margin-top: 0; }
+      .ask-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0; }
+      @media (max-width: 620px) { .ask-stats { grid-template-columns: repeat(2, 1fr); } }
+      .ask-stat { background: var(--paper-2); border: 1px solid var(--line); border-radius: 2px; padding: 10px 12px; }
+      .ask-stat .k { color: var(--ink-3); font-size: 13px; font-weight: 500; display: block; font-family: "IBM Plex Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+      .ask-stat .v { font-family: "Space Grotesk", system-ui, sans-serif; font-weight: 700; font-size: clamp(32px, 3vw, 44px); line-height: 1; letter-spacing: -0.03em; color: var(--blue-ink); font-variant-numeric: tabular-nums; }
+      .ask-take { color: var(--ink); font-size: 15px; line-height: 24px; margin: 4px 0 0; }
+      .ask-msg { color: var(--ink-2); }
+      .ask-retry { margin-top: 10px; }
+      .edu-note { color: var(--ink-3); font-size: 13px; font-weight: 500; line-height: 24px; margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; }
+
+      /* ---------- On-chain ---------- */
+      .deploy-notice {
+        border: 2px dashed var(--yellow); background: rgba(0, 32, 110, 0.35);
+        border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
+        color: #ffffff; font-size: 15px; line-height: 24px;
+      }
+      .contract-info {
+        border: 2px solid var(--blue-ink); background: var(--paper);
+        border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px;
+        color: var(--ink-2); font-size: 13px; font-weight: 500; line-height: 24px; word-break: break-all; box-shadow: var(--shadow);
+      }
+      .contract-info .live-dot { color: var(--up); font-weight: 700; }
+      .contract-info a { color: var(--blue); font-family: "IBM Plex Mono", monospace; font-size: 0.84rem; font-weight: 600; }
+      .wallet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+      @media (max-width: 700px) { .wallet-grid { grid-template-columns: 1fr; } }
+      .wallet-grid h3 { font-family: "Space Grotesk", system-ui, sans-serif; margin: 0 0 8px; font-size: 15px; line-height: 1; font-weight: 700; color: var(--blue-ink); text-transform: uppercase; letter-spacing: -0.03em; }
+      .wallet-grid p { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; line-height: 24px; }
+      .wallet-status { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500; color: var(--ink-2); word-break: break-all; margin-bottom: 12px; min-height: 1.3em; }
+      .streak-row { display: flex; gap: 10px; margin-top: 12px; }
+      .streak-box { flex: 1; background: var(--paper-2); border: 1.5px solid var(--blue-ink); border-radius: 8px; padding: 10px 12px; text-align: center; }
+      .streak-box .n { font-family: "Space Grotesk", system-ui, sans-serif; font-size: clamp(32px, 3vw, 44px); line-height: 1; letter-spacing: -0.03em; font-weight: 700; color: var(--blue); display: block; font-variant-numeric: tabular-nums; }
+      .streak-box .l { color: var(--ink-3); font-size: 13px; font-weight: 500; font-family: "IBM Plex Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+      .chip {
+        border: 2px solid var(--blue-ink); background: var(--paper); color: var(--blue);
+        border-radius: 999px; padding: 6px 14px; cursor: pointer;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.84rem; font-weight: 700; min-height: 2.25rem;
+        box-shadow: 3px 3px 0 var(--blue-ink);
+        transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+      }
+      .chip:hover { background: var(--paper-2); transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--blue-ink); }
+      .chip:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 var(--blue-ink); }
+      .chip[aria-pressed="true"] { background: var(--blue); border-color: var(--blue-ink); color: #ffffff; }
+      .chip:disabled { opacity: 0.45; cursor: not-allowed; }
+      .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+      .saved-list { margin-top: 12px; color: var(--ink-2); font-size: 15px; line-height: 24px; }
+      .saved-list .mono { font-family: "IBM Plex Mono", monospace; color: var(--blue-ink); font-weight: 600; }
+      .tx-msg { margin-top: 10px; font-size: 13px; font-weight: 500; line-height: 24px; color: var(--ink-2); min-height: 1.3em; word-break: break-word; }
+      .tx-msg.err { color: var(--down); }
+      .tx-msg.ok { color: var(--up); }
+
+      footer { margin-top: 44px; border-top: 1px solid rgba(255, 255, 255, 0.6); padding-top: 16px; color: var(--on-blue-dim); font-size: 13px; font-weight: 500; line-height: 24px; font-family: "IBM Plex Mono", monospace; }
+      footer p { margin: 0 0 6px; }
+
+      /* ---------- Hero line-art: the agent at work (FIG. A) ---------- */
+      .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) 352px; gap: 30px; align-items: center; }
+      @media (max-width: 880px) { .hero-grid { grid-template-columns: 1fr; } .hero-art { max-width: 460px; } }
+      .hero-art {
+        margin: 0; border: 2px solid #ffffff; border-radius: var(--radius);
+        box-shadow: 8px 8px 0 rgba(4, 24, 77, 0.55);
+        background: rgba(0, 32, 110, 0.22);
+        padding: 12px 12px 10px; position: relative;
+      }
+      .hero-art svg { display: block; width: 100%; height: auto; }
+      .hero-art figcaption {
+        margin-top: 9px; font-family: "IBM Plex Mono", monospace; font-size: 0.66rem;
+        letter-spacing: 0.13em; text-transform: uppercase; color: var(--on-blue-dim);
+        display: flex; align-items: center; gap: 8px;
+      }
+      .hero-art figcaption .ydot { width: 8px; height: 8px; background: var(--yellow); flex: none; }
+
+      /* ---------- Schematic divider: dashed rule + crosshair circle ---------- */
+      .schem-divider {
+        position: relative; height: 0; margin: 2px 0 20px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.5);
+      }
+      .schem-divider::before {
+        content: ""; position: absolute; left: 50%; top: -9px; width: 17px; height: 17px;
+        margin-left: -9.5px; border: 1.5px solid #ffffff; border-radius: 50%; background: var(--blue);
+      }
+      .schem-divider::after {
+        content: "+"; position: absolute; left: 50%; top: -10px; transform: translateX(-50%);
+        font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; font-weight: 700;
+        line-height: 20px; color: var(--yellow);
+      }
+      .schem-divider .sd-plus {
+        position: absolute; top: -10px; font-family: "IBM Plex Mono", monospace;
+        font-size: 0.8rem; line-height: 20px; color: rgba(255, 255, 255, 0.8);
+      }
+      .schem-divider .sd-plus.l { left: 0; }
+      .schem-divider .sd-plus.r { right: 0; }
+
+      /* ---------- Registration marks + outline-circle motif on panels ---------- */
+      .card, .briefing-card { position: relative; overflow: hidden; }
+      .card::before, .briefing-card::before {
+        content: "+"; position: absolute; top: 5px; right: 10px;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; color: var(--line-mid);
+      }
+      .briefing-card::after {
+        content: ""; position: absolute; right: -52px; bottom: -52px;
+        width: 138px; height: 138px; border: 1.5px solid var(--line); border-radius: 50%;
+        opacity: 0.55; pointer-events: none;
+      }
+      .does-item { position: relative; }
+      .does-item::after {
+        content: "+"; position: absolute; right: 8px; bottom: 4px;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; color: var(--line-mid);
+      }
+
+      /* ---------- Numbers as visuals: bars drawn from live data only ---------- */
+      .viz { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 9px; display: grid; gap: 6px; }
+      .viz-row { display: flex; align-items: center; gap: 8px; }
+      .viz-k {
+        font-family: "IBM Plex Mono", monospace; font-size: 0.6rem; letter-spacing: 0.1em;
+        color: var(--ink-3); text-transform: uppercase; width: 30px; flex: none;
+      }
+      .viz-track { position: relative; flex: 1; height: 9px; background: var(--paper-2); border: 1px solid var(--line); }
+      .viz-zero { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--line-mid); }
+      .viz-fill { position: absolute; top: 0; bottom: 0; }
+      .viz-fill.up { background: var(--up); }
+      .viz-fill.down { background: var(--down); }
+      .viz-fill.vol { background: var(--blue); left: 0; }
+      .viz-v {
+        font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; color: var(--ink-2);
+        min-width: 46px; text-align: right; font-variant-numeric: tabular-nums; flex: none;
+      }
+      .card .viz { border-top-color: var(--line); }
+
+      /* ---------- Briefing breadth bar: share of the board up / down ---------- */
+      .breadth { display: flex; height: 14px; border: 2px solid var(--blue-ink); border-radius: 999px; overflow: hidden; margin: 2px 0 6px; }
+      .breadth span { display: block; height: 100%; }
+      .breadth .b-up { background: var(--up); }
+      .breadth .b-down { background: var(--down); }
+      .breadth .b-flat { background: var(--line-mid); }
+      .breadth-legend {
+        font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; letter-spacing: 0.1em;
+        text-transform: uppercase; color: var(--ink-3); margin: 0 0 12px;
+      }
+
+      /* ---------- Chunky accents: mono pill badge, sticker, shape strip ---------- */
+      .pill-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #ffffff; color: var(--blue-ink);
+        border: 2px solid var(--blue-ink); border-radius: 999px;
+        box-shadow: var(--shadow-sm);
+        font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 700;
+        letter-spacing: 0.12em; text-transform: uppercase;
+        padding: 7px 14px; margin-bottom: 18px;
+      }
+      .pill-badge .pdot {
+        width: 9px; height: 9px; border-radius: 50%; flex: none;
+        background: var(--yellow); border: 2px solid var(--blue-ink);
+      }
+      .art-sticker {
+        position: absolute; top: -13px; right: 14px; z-index: 2;
+        background: var(--yellow); color: var(--blue-ink);
+        border: 2px solid var(--blue-ink); border-radius: 999px;
+        box-shadow: 3px 3px 0 var(--blue-ink);
+        font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; font-weight: 700;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        padding: 5px 11px; transform: rotate(4deg);
+      }
+      .shape-strip {
+        position: relative; display: flex; justify-content: space-between; align-items: center;
+        margin: 30px 2px 0;
+      }
+      .shape-strip::before {
+        content: ""; position: absolute; left: 0; right: 0; top: 50%;
+        border-top: 1px dashed rgba(255, 255, 255, 0.45);
+      }
+      .shape-strip svg {
+        width: 26px; height: 26px; flex: none; position: relative;
+        background: var(--blue); padding: 2px 4px;
+      }
+
+      /* ---------- Does-cards: line-art icons + one yellow accent card ---------- */
+      .does-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+      .does-top .glyph { margin-bottom: 0; }
+      .does-ico { width: 27px; height: 27px; flex: none; }
+      .does-item.accent { background: var(--yellow); }
+      .does-item.accent .glyph { background: #ffffff; }
+      .does-item.accent::after { color: rgba(4, 24, 77, 0.4); }
+
+      /* ---------- The big yellow panel: Ask Rowan ---------- */
+      .card-yellow { background: var(--yellow); }
+      .card-yellow::before { color: rgba(4, 24, 77, 0.45); }
+      .card-yellow .ask-row input {
+        background: #ffffff; border: 2px solid var(--blue-ink);
+        box-shadow: 3px 3px 0 var(--blue-ink);
+      }
+      .card-yellow .ask-stat {
+        background: #ffffff; border: 1.5px solid var(--blue-ink);
+        box-shadow: 3px 3px 0 var(--blue-ink); border-radius: 8px;
+      }
+      .card-yellow .edu-note { border-top-color: rgba(4, 24, 77, 0.4); color: var(--ink-2); }
+      .card-yellow .viz { border-top-color: rgba(4, 24, 77, 0.4); }
+      .card-yellow .viz-track { background: rgba(255, 255, 255, 0.65); border-color: var(--blue-ink); }
+      .card-yellow .viz-zero { background: rgba(4, 24, 77, 0.5); }
+
+      @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <div class="coord-bar" aria-hidden="true"><span class="plus">+</span><span>Sheet RS—01</span><span>Grid 28 / 140</span><span>Datum · Base</span><span class="spacer"></span><span>Units · USD</span><span>Scale · NTS</span><span class="plus">+</span></div>
+
+      <div class="risk" role="note">
+        <strong>⚠ Read this first — educational demo, not financial advice</strong>
+        <p>Rowan Stocks is an educational demo built for the Base Stocks Maxxing Season. It is <b>not financial advice</b>, it does <b>not trade real assets</b>, and it does <b>not promise any returns</b>. Prices can go down as well as up. Holding a tokenized stock gives you <b>no voting rights</b> in the underlying company. Everything on-chain here runs on <b>Base Sepolia testnet — play money only</b>, with no real-world value.</p>
+      </div>
+
+      <header class="page-head">
+        <div class="hero-grid">
+          <div class="hero-text">
+            <span class="pill-badge"><span class="pdot" aria-hidden="true"></span>Live from Base</span>
+            <div class="brand-row">
+              <h1>Rowan <span class="gold">Stocks</span></h1>
+            </div>
+            <p class="tagline">Your AI agent for tokenized stocks. Rowan follows Coinbase-issued tokenized stocks trading on Base and explains what is happening in plain language — no jargon, no hype.</p>
+            <span class="chain-pill">Live data: <b>Base mainnet DEX pools</b> · On-chain features: <b>Base Sepolia testnet</b></span>
+            <div class="dim-line" aria-hidden="true">⟷ Field of view — 11 instruments · Projection — live feed · Drawn by the agent, checked against the pools</div>
+          </div>
+          <figure class="hero-art" role="img" aria-label="Blueprint line drawing of the Rowan agent at work, watching a rising stock chart">
+            <span class="art-sticker" aria-hidden="true">● Live feed</span>
+            <svg viewBox="0 0 360 250" aria-hidden="true" focusable="false">
+              <!-- sheet frame -->
+              <rect x="8" y="8" width="344" height="234" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1" stroke-dasharray="5 5"/>
+              <g stroke="#ffffff" stroke-width="1.5">
+                <path d="M1 8 H15 M8 1 V15" fill="none"/>
+                <path d="M345 8 H359 M352 1 V15" fill="none"/>
+                <path d="M1 242 H15 M8 235 V249" fill="none"/>
+                <path d="M345 242 H359 M352 235 V249" fill="none"/>
+              </g>
+              <text x="18" y="27" font-family="IBM Plex Mono, monospace" font-size="9" letter-spacing="2" fill="rgba(255,255,255,0.85)">FIG. A</text>
+              <text x="18" y="233" font-family="IBM Plex Mono, monospace" font-size="8" letter-spacing="1" fill="rgba(255,255,255,0.55)">DWG. RS—01 · REV C</text>
+              <text x="298" y="233" font-family="IBM Plex Mono, monospace" font-size="8" letter-spacing="1" fill="rgba(255,255,255,0.55)">SCALE NTS</text>
+
+              <!-- target / crosshair behind the chart screen -->
+              <g fill="none" stroke="#ffffff">
+                <circle cx="262" cy="92" r="58" stroke-opacity="0.5"/>
+                <circle cx="262" cy="92" r="40" stroke-opacity="0.45" stroke-dasharray="4 4"/>
+                <path d="M188 92 H336 M262 18 V166" stroke-opacity="0.4"/>
+                <circle cx="262" cy="92" r="3" stroke-opacity="0.7"/>
+              </g>
+
+              <!-- chart screen -->
+              <rect x="200" y="44" width="124" height="96" fill="rgba(255,255,255,0.06)" stroke="#ffffff" stroke-width="1.5"/>
+              <path d="M200 57 H324" stroke="#ffffff" stroke-opacity="0.7"/>
+              <circle cx="209" cy="50.5" r="2" fill="none" stroke="#ffffff" stroke-opacity="0.8"/>
+              <text x="205" y="38" font-family="IBM Plex Mono, monospace" font-size="9" fill="#ffd60a">P(t)</text>
+              <path d="M210 130 H316" stroke="#ffffff" stroke-opacity="0.55"/>
+              <polyline points="210,124 228,108 242,116 258,88 276,98 292,72 312,62" fill="none" stroke="#ffd60a" stroke-width="2"/>
+              <polygon points="312,62 302.5,62.5 309.5,71" fill="#ffd60a"/>
+              <g fill="#0052ff" stroke="#ffffff" stroke-width="1">
+                <circle cx="228" cy="108" r="2.4"/>
+                <circle cx="258" cy="88" r="2.4"/>
+                <circle cx="292" cy="72" r="2.4"/>
+              </g>
+              <!-- dimension line under the screen -->
+              <path d="M200 152 V160 M324 152 V160 M200 156 H324" stroke="#ffffff" stroke-opacity="0.65" fill="none"/>
+              <text x="252" y="150" font-family="IBM Plex Mono, monospace" font-size="8" fill="rgba(255,255,255,0.8)">24H</text>
+
+              <!-- dashed link: agent observing the screen -->
+              <path d="M150 80 C 168 70, 184 66, 198 63" fill="none" stroke="#ffffff" stroke-opacity="0.5" stroke-dasharray="3 4"/>
+
+              <!-- the agent -->
+              <circle cx="93" cy="91" r="41" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-dasharray="3 5"/>
+              <path d="M93 66 V50" stroke="#ffffff" stroke-width="1.5"/>
+              <circle cx="93" cy="45" r="4.5" fill="#ffd60a"/>
+              <rect x="58" y="84" width="6" height="14" fill="none" stroke="#ffffff"/>
+              <rect x="122" y="84" width="6" height="14" fill="none" stroke="#ffffff"/>
+              <rect x="64" y="66" width="58" height="50" rx="9" fill="rgba(255,255,255,0.05)" stroke="#ffffff" stroke-width="1.5"/>
+              <circle cx="82" cy="90" r="3" fill="none" stroke="#ffffff"/>
+              <circle cx="104" cy="90" r="3" fill="#ffd60a"/>
+              <path d="M84 104 H102" stroke="#ffffff" stroke-width="1.5"/>
+              <path d="M74 116 L112 116 L124 166 L62 166 Z" fill="rgba(255,255,255,0.04)" stroke="#ffffff" stroke-width="1.5"/>
+              <rect x="84" y="129" width="18" height="13" fill="none" stroke="#ffffff" stroke-opacity="0.85"/>
+              <polyline points="86.5,137 90,132.5 93.5,140 97,134.5 99.5,137" fill="none" stroke="#ffd60a" stroke-width="1.2"/>
+              <path d="M120 132 L168 118 L196 105" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+              <circle cx="198" cy="104" r="3.5" fill="#ffd60a"/>
+              <path d="M66 132 L50 152" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+              <text x="30" y="56" font-family="IBM Plex Mono, monospace" font-size="8.5" letter-spacing="1" fill="rgba(255,255,255,0.8)">AGENT—01</text>
+              <path d="M34 62 V166 M30 66 H38 M30 166 H38" stroke="#ffffff" stroke-opacity="0.6" fill="none"/>
+
+              <!-- mini candle panel on the desk -->
+              <rect x="36" y="158" width="66" height="30" fill="none" stroke="#ffffff"/>
+              <g stroke="#ffffff">
+                <path d="M48 164 V182" />
+                <rect x="45.5" y="168" width="5" height="8" fill="none"/>
+                <path d="M76 166 V180" />
+                <rect x="73.5" y="170" width="5" height="7" fill="none"/>
+              </g>
+              <path d="M62 163 V183" stroke="#ffd60a"/>
+              <rect x="59.5" y="166" width="5" height="9" fill="#ffd60a"/>
+
+              <!-- gear -->
+              <g fill="none" stroke="#ffffff" stroke-opacity="0.85">
+                <circle cx="150" cy="180" r="10"/>
+                <path d="M140 180 H160 M145 171.5 L155 188.5 M155 171.5 L145 188.5"/>
+                <circle cx="150" cy="180" r="2.5"/>
+              </g>
+
+              <!-- desk / ground line with hatch -->
+              <path d="M28 196 H332" stroke="#ffffff" stroke-width="1.5"/>
+              <path d="M44 196 L38 204 M72 196 L66 204 M100 196 L94 204 M128 196 L122 204 M156 196 L150 204 M184 196 L178 204 M212 196 L206 204 M240 196 L234 204 M268 196 L262 204 M296 196 L290 204 M322 196 L316 204" stroke="#ffffff" stroke-opacity="0.5" fill="none"/>
+
+              <!-- yellow data packets travelling the dashed link -->
+              <g fill="#ffd60a">
+                <rect x="160" y="67" width="5" height="5"/>
+                <rect x="176" y="61" width="5" height="5"/>
+                <rect x="190" y="58" width="5" height="5"/>
+              </g>
+
+              <!-- four-point sparkle -->
+              <path d="M332 22 L335.5 31 L344 34.5 L335.5 38 L332 47 L328.5 38 L320 34.5 L328.5 31 Z" fill="#ffd60a"/>
+
+              <!-- mini bar chart standing on the desk line -->
+              <g fill="none" stroke="#ffffff" stroke-width="1.5">
+                <rect x="288" y="176" width="9" height="20"/>
+                <rect x="303" y="168" width="9" height="28"/>
+              </g>
+              <rect x="318" y="160" width="9" height="36" fill="#ffd60a"/>
+
+              <!-- scattered registration pluses -->
+              <g stroke="#ffffff" stroke-opacity="0.7" stroke-width="1.2">
+                <path d="M171 36 H181 M176 31 V41" fill="none"/>
+                <path d="M333 196 H343 M338 191 V201" fill="none"/>
+                <path d="M163 214 H173 M168 209 V219" fill="none"/>
+              </g>
+            </svg>
+            <figcaption><span class="ydot" aria-hidden="true"></span>Fig. A — the agent at work · schematic, not to scale</figcaption>
+          </figure>
+        </div>
+      </header>
+
+      <div class="shape-strip" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffd60a" stroke-width="2.4"><path d="M12 4 V20 M4 12 H20"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><path d="M12 4.5 L21 20 H3 Z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffd60a" stroke-width="1.8"><rect x="6" y="6" width="12" height="12" transform="rotate(45 12 12)"/></svg>
+        <svg viewBox="0 0 24 24" fill="#ffffff"><path d="M12 3 L14.2 9.8 L21 12 L14.2 14.2 L12 21 L9.8 14.2 L3 12 L9.8 9.8 Z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffd60a" stroke-width="1.8"><path d="M4 17 A8 8 0 0 1 20 17"/><path d="M3 20.5 H21"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 1.5 V6 M12 18 V22.5 M1.5 12 H6 M18 12 H22.5"/></svg>
+      </div>
+
+      <section aria-labelledby="does-h">
+        <div class="sec-head"><h2 id="does-h">What the agent does for you</h2></div>
+        <div class="does-grid">
+          <div class="does-item accent">
+            <div class="does-top"><span class="glyph" aria-hidden="true">TRK—01</span><svg class="does-ico" viewBox="0 0 24 24" fill="none" stroke="#0052FF" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5" stroke-dasharray="3 3"/><path d="M12 3.5 V12 L17.5 8"/><circle cx="12" cy="12" r="1.7" fill="#FFD60A" stroke="none"/></svg></div>
+            <h3>Watches live prices</h3>
+            <p>Rowan checks the live Base DEX pools for all 11 tokenized stocks, refreshing every minute.</p>
+          </div>
+          <div class="does-item">
+            <div class="does-top"><span class="glyph" aria-hidden="true">SUM—02</span><svg class="does-ico" viewBox="0 0 24 24" fill="none" stroke="#0052FF" stroke-width="1.8" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17"/><path d="M8.5 8.5 H15.5 M8.5 12 H15.5"/><path d="M8.5 15.5 H13" stroke="#FFD60A" stroke-width="2.6"/></svg></div>
+            <h3>Summarizes them</h3>
+            <p>Every load, Rowan writes a short daily briefing from the real numbers — who is up, who is down, what is moving.</p>
+          </div>
+          <div class="does-item accent">
+            <div class="does-top"><span class="glyph" aria-hidden="true">ASK—03</span><svg class="does-ico" viewBox="0 0 24 24" fill="none" stroke="#0052FF" stroke-width="1.8" aria-hidden="true"><path d="M4 5.5 H20 V15 H12.5 L7 19.5 V15 H4 Z"/><circle cx="9" cy="10.2" r="1.3" fill="#0052FF" stroke="none"/><circle cx="12.8" cy="10.2" r="1.3" fill="#FFD60A" stroke="none"/><circle cx="16.6" cy="10.2" r="1.3" fill="#0052FF" stroke="none"/></svg></div>
+            <h3>Answers questions</h3>
+            <p>Ask about any ticker and Rowan explains its day in simple words, straight from the live data.</p>
+          </div>
+          <div class="does-item">
+            <div class="does-top"><span class="glyph" aria-hidden="true">WL—04</span><svg class="does-ico" viewBox="0 0 24 24" fill="none" stroke="#0052FF" stroke-width="1.8" aria-hidden="true"><path d="M7 3.5 H17 V20 L12 16 L7 20 Z"/><path d="M12 7 V12 M9.5 9.5 H14.5" stroke="#FFD60A" stroke-width="2.2"/></svg></div>
+            <h3>Remembers your watchlist</h3>
+            <p>Save up to 10 tickers to the RowanStocks contract on Base Sepolia, and check in daily to build a streak.</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="board-h">
+        <div class="schem-divider" aria-hidden="true"><span class="sd-plus l">+</span><span class="sd-plus r">+</span></div>
+        <div class="sec-head">
+          <h2 id="board-h"><span class="num">01</span>Live market board</h2>
+          <div class="board-tools">
+            <span class="updated" id="lastUpdated">Not loaded yet</span>
+            <button class="btn" id="refreshBtn" type="button">↻ Refresh prices</button>
+          </div>
+        </div>
+        <p class="sec-sub">Coinbase-issued tokenized stocks (B20 tokens) trading on Base. Prices update automatically every 60 seconds.</p>
+        <div id="boardArea">
+          <p class="board-status" id="boardStatus">Loading live prices from Base DEX pools…</p>
+          <div class="board-grid" id="boardGrid"></div>
+        </div>
+        <p class="source-note">Data source: <a href="https://dexscreener.com" target="_blank" rel="noopener">Dexscreener</a> — live Base DEX pools (highest-liquidity pair per token). Reference NAV values for these tokenized stocks are published by Coinbase at api.coinbase.com/v1/tokenized-stocks. DEX prices can differ from NAV.</p>
+      </section>
+
+      <section aria-labelledby="brief-h">
+        <div class="schem-divider" aria-hidden="true"><span class="sd-plus l">+</span><span class="sd-plus r">+</span></div>
+        <div class="sec-head"><h2 id="brief-h"><span class="num">02</span>Agent daily briefing</h2></div>
+        <div class="briefing-card">
+          <div class="briefing-meta" id="briefingMeta">ROWAN'S BRIEFING</div>
+          <div class="briefing-body" id="briefingBody">
+            <p class="dim">Waiting for live prices… the briefing appears as soon as the market board loads.</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="ask-h">
+        <div class="schem-divider" aria-hidden="true"><span class="sd-plus l">+</span><span class="sd-plus r">+</span></div>
+        <div class="sec-head"><h2 id="ask-h"><span class="num">03</span>Ask Rowan</h2></div>
+        <p class="sec-sub">Type a ticker — for example NVDA, AAPL or TSLA — and Rowan will look it up in the live data and explain its day.</p>
+        <div class="card card-yellow">
+          <form class="ask-row" id="askForm">
+            <input id="askInput" type="text" autocomplete="off" spellcheck="false" maxlength="12" placeholder="Enter a ticker, e.g. NVDA" aria-label="Ticker symbol" />
+            <button class="btn btn-gold" id="askBtn" type="submit">Ask Rowan</button>
+          </form>
+          <div class="ask-result" id="askResult"></div>
+          <p class="edu-note">Educational only — this is a plain-language explanation of public price data, not financial advice and not a recommendation to buy or sell anything.</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="chain-h">
+        <div class="schem-divider" aria-hidden="true"><span class="sd-plus l">+</span><span class="sd-plus r">+</span></div>
+        <div class="sec-head"><h2 id="chain-h"><span class="num">04</span>On-chain watchlist &amp; daily check-in</h2></div>
+        <p class="sec-sub">Powered by the RowanStocks contract on Base Sepolia testnet (chain 84532). Testnet only — play money, no real assets.</p>
+
+        <div class="deploy-notice" id="deployNotice" hidden>
+          ⏳ The RowanStocks contract is being deployed to Base Sepolia — on-chain watchlist and check-in go live here as soon as the deployment lands.
+        </div>
+
+        <div class="contract-info" id="contractInfo" hidden>
+          <span class="live-dot">● Live on Base Sepolia</span> · RowanStocks contract:
+          <a id="contractLink" href="https://sepolia.basescan.org/address/0xc2ADeA8451E951F99ae1397cc1bf2D7E7f03eCa5" target="_blank" rel="noopener">0xc2ADeA8451E951F99ae1397cc1bf2D7E7f03eCa5</a>
+        </div>
+
+        <div class="card">
+          <div class="wallet-status" id="walletStatus">Wallet not connected.</div>
+          <div class="btn-row">
+            <button class="btn btn-gold" id="connectBtn" type="button">Connect wallet</button>
+          </div>
+
+          <div class="wallet-grid" style="margin-top: 20px;">
+            <div>
+              <h3>Daily check-in</h3>
+              <p>Check in once a day to build your streak. Rowan reads your streak and total check-ins straight from the contract.</p>
+              <button class="btn" id="checkInBtn" type="button">Check in today</button>
+              <div class="streak-row">
+                <div class="streak-box"><span class="n" id="streakVal">–</span><span class="l">Day streak</span></div>
+                <div class="streak-box"><span class="n" id="totalVal">–</span><span class="l">Total check-ins</span></div>
+              </div>
+              <div class="tx-msg" id="checkInMsg"></div>
+            </div>
+            <div>
+              <h3>Your watchlist (up to 10)</h3>
+              <p>Tap tickers to pick them, then save the list on-chain. Rowan reads it back from the contract so you can see exactly what is stored.</p>
+              <div class="chips" id="watchChips"></div>
+              <div class="btn-row">
+                <button class="btn" id="saveWatchBtn" type="button">Save watchlist on-chain</button>
+                <button class="btn" id="readWatchBtn" type="button">Read my watchlist</button>
+              </div>
+              <div class="saved-list" id="savedList"></div>
+              <div class="tx-msg" id="watchMsg"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <p>Built by Haqi + Rowan (AI agent) for the Base Stocks Maxxing Season. Educational demo — not financial advice.</p>
+        <p>Market data: Dexscreener (live Base DEX pools). Reference NAV: Coinbase tokenized stocks API. On-chain: Base Sepolia testnet.</p>
+      </footer>
+    </div>
+
+    <script>
+      "use strict";
+
+      /* ============================================================
+         CONFIG — RowanStocks contract, live on Base Sepolia.
+         Watchlist save and daily check-in run against this contract
+         via an injected wallet on Base Sepolia (chain 84532).
+         Market board, briefing and Q&A stay off-chain (Dexscreener).
+         ============================================================ */
+      var CONFIG = {
+        ROWAN_STOCKS_CONTRACT_ADDRESS: "0xc2ADeA8451E951F99ae1397cc1bf2D7E7f03eCa5", // RowanStocks on Base Sepolia
+        CHAIN_ID: 84532,                   // Base Sepolia
+        CHAIN_NAME: "Base Sepolia",
+        EXPLORER_URL: "https://sepolia.basescan.org",
+        AUTO_REFRESH_MS: 60000
+      };
+
+      var ROWAN_STOCKS_ABI = [
+        "function checkIn()",
+        "function checkInStreak(address) view returns (uint256)",
+        "function checkInTotal(address) view returns (uint256)",
+        "function setWatchlist(string[] tickers)",
+        "function getWatchlist(address) view returns (string[])",
+        "function postBriefing(string day, string uri)",
+        "function getBriefingCount() view returns (uint256)",
+        "function agent() view returns (address)"
+      ];
+
+      /* The 11 Coinbase-issued tokenized stocks on Base (B20, 8 decimals). */
+      var TOKENS = [
+        { ticker: "NVDAc",  base: "NVDA", company: "NVIDIA",    address: "0xb20000000000000000000078ee7ce2fE4908108C" },
+        { ticker: "AAPLc",  base: "AAPL", company: "Apple",     address: "0xb200000000000000000000C2e324d24d7eEcd1fb" },
+        { ticker: "TSLAc",  base: "TSLA", company: "Tesla",     address: "0xb2000000000000000000001e800a7f5189430cD0" },
+        { ticker: "MSFTc",  base: "MSFT", company: "Microsoft", address: "0xB200000000000000000000Ab99cFa739E253872B" },
+        { ticker: "GOOGLc", base: "GOOGL", company: "Alphabet", address: "0xb2000000000000000000002D0BA3164cc74f58B7" },
+        { ticker: "AMZNc",  base: "AMZN", company: "Amazon",    address: "0xb200000000000000000000d9192b6B456483C2E8" },
+        { ticker: "METAc",  base: "META", company: "Meta",      address: "0xb2000000000000000000008bC8786B856E61707C" },
+        { ticker: "MSTRc",  base: "MSTR", company: "Strategy",  address: "0xb2000000000000000000004884b426556b92883d" },
+        { ticker: "CRCLc",  base: "CRCL", company: "Circle",    address: "0xB20000000000000000000019f6E7C675b73C2e4D" },
+        { ticker: "SNDKc",  base: "SNDK", company: "SanDisk",   address: "0xb200000000000000000000397293Cb8cda9a10c5" },
+        { ticker: "SPCXc",  base: "SPCX", company: "SpaceX",    address: "0xb2000000000000000000007b9fcbd005511aCBd5" }
+      ];
+
+      /* ---------------- State (in-memory only, nothing is saved) ---------------- */
+      var liveData = null;      // { "NVDAc": {price, change24, volume24, liquidity, dex}, ... }
+      var liveLoadedAt = null;  // Date of last successful fetch
+      var wallet = { provider: null, signer: null, address: null, contract: null };
+      var selectedWatch = {};   // ticker -> true
+
+      /* ---------------- Small DOM helpers (textContent only) ---------------- */
+      function el(tag, cls, text) {
+        var n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text !== undefined && text !== null) n.textContent = text;
+        return n;
+      }
+      function fmtUSD(v) {
+        if (v === null || v === undefined || isNaN(v)) return "—";
+        if (v >= 1000) return "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (v >= 1) return "$" + v.toFixed(2);
+        return "$" + v.toFixed(4);
+      }
+      function fmtCompact(v) {
+        if (v === null || v === undefined || isNaN(v)) return "—";
+        if (v >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
+        if (v >= 1e6) return "$" + (v / 1e6).toFixed(2) + "M";
+        if (v >= 1e3) return "$" + (v / 1e3).toFixed(1) + "K";
+        return "$" + v.toFixed(0);
+      }
+      function fmtChange(v) {
+        if (v === null || v === undefined || isNaN(v)) return "—";
+        var sign = v > 0 ? "+" : "";
+        return sign + v.toFixed(2) + "%";
+      }
+
+      /* ============================================================
+         1. LIVE MARKET BOARD — Dexscreener public API, fetched live.
+         No prices are ever hardcoded, cached or simulated.
+         ============================================================ */
+      var boardGrid = document.getElementById("boardGrid");
+      var boardStatus = document.getElementById("boardStatus");
+      var lastUpdated = document.getElementById("lastUpdated");
+      var refreshBtn = document.getElementById("refreshBtn");
+
+      function pickBestPair(pairs, address) {
+        var best = null;
+        var target = address.toLowerCase();
+        for (var i = 0; i < pairs.length; i++) {
+          var p = pairs[i];
+          if (!p.baseToken || !p.baseToken.address) continue;
+          if (p.baseToken.address.toLowerCase() !== target) continue;
+          var liq = p.liquidity && typeof p.liquidity.usd === "number" ? p.liquidity.usd : 0;
+          if (!best || liq > best._liq) { p._liq = liq; best = p; }
+        }
+        return best;
+      }
+
+      /* ----- Numbers as visuals: bars scaled to the board's own live
+         maxima — every length below is computed from fetched numbers. */
+      function boardMaxima() {
+        var maxAbs = 0, maxVol = 0;
+        if (liveData) {
+          TOKENS.forEach(function (t) {
+            var d = liveData[t.ticker];
+            if (!d) return;
+            if (typeof d.change24 === "number") maxAbs = Math.max(maxAbs, Math.abs(d.change24));
+            if (typeof d.volume24 === "number") maxVol = Math.max(maxVol, d.volume24);
+          });
+        }
+        return { maxAbs: maxAbs, maxVol: maxVol };
+      }
+      function buildMoveRow(change, maxAbs) {
+        var row = el("div", "viz-row");
+        row.appendChild(el("span", "viz-k", "24h"));
+        var track = el("div", "viz-track");
+        track.appendChild(el("span", "viz-zero"));
+        var fill = el("span", "viz-fill " + (change > 0 ? "up" : change < 0 ? "down" : ""));
+        var half = maxAbs > 0 ? Math.min(100, Math.abs(change) / maxAbs * 100) / 2 : 0;
+        fill.style.width = half + "%";
+        fill.style.left = (change < 0 ? 50 - half : 50) + "%";
+        track.appendChild(fill);
+        row.appendChild(track);
+        row.appendChild(el("span", "viz-v", fmtChange(change)));
+        return row;
+      }
+      function buildVolRow(volume, maxVol) {
+        var row = el("div", "viz-row");
+        row.appendChild(el("span", "viz-k", "Vol"));
+        var track = el("div", "viz-track");
+        var fill = el("span", "viz-fill vol");
+        fill.style.width = (maxVol > 0 ? Math.min(100, volume / maxVol * 100) : 0) + "%";
+        track.appendChild(fill);
+        row.appendChild(track);
+        row.appendChild(el("span", "viz-v", fmtCompact(volume)));
+        return row;
+      }
+
+      function renderBoard() {
+        boardGrid.replaceChildren();
+        var maxima = boardMaxima();
+        TOKENS.forEach(function (t) {
+          var d = liveData ? liveData[t.ticker] : null;
+          var card = el("div", "stock");
+          var top = el("div", "stock-top");
+          var nameBox = el("div");
+          nameBox.appendChild(el("div", "ticker", t.ticker));
+          nameBox.appendChild(el("div", "company", t.company));
+          top.appendChild(nameBox);
+          var chgCls = "chg flat";
+          if (d && typeof d.change24 === "number") chgCls = "chg " + (d.change24 > 0 ? "up" : d.change24 < 0 ? "down" : "flat");
+          top.appendChild(el("span", chgCls, d ? fmtChange(d.change24) + " 24h" : "no pair"));
+          card.appendChild(top);
+          card.appendChild(el("div", "price", d ? fmtUSD(d.price) : "—"));
+          var meta = el("div", "stock-meta");
+          var vol = el("span"); vol.appendChild(document.createTextNode("Vol 24h ")); var vb = el("b", null, d ? fmtCompact(d.volume24) : "—"); vol.appendChild(vb);
+          var dex = el("span"); dex.appendChild(document.createTextNode("DEX ")); var db = el("b", null, d ? d.dex : "—"); dex.appendChild(db);
+          meta.appendChild(vol); meta.appendChild(dex);
+          card.appendChild(meta);
+          if (d && (typeof d.change24 === "number" || typeof d.volume24 === "number")) {
+            var viz = el("div", "viz");
+            if (typeof d.change24 === "number") viz.appendChild(buildMoveRow(d.change24, maxima.maxAbs));
+            if (typeof d.volume24 === "number") viz.appendChild(buildVolRow(d.volume24, maxima.maxVol));
+            card.appendChild(viz);
+          }
+          boardGrid.appendChild(card);
+        });
+      }
+
+      function showBoardError(msg) {
+        liveData = null;
+        boardGrid.replaceChildren();
+        boardStatus.hidden = false;
+        boardStatus.className = "board-status error";
+        boardStatus.textContent = msg;
+        renderBriefingError();
+      }
+
+      /* One shared in-flight load: the board, the auto-refresh and
+         Ask Rowan all read from the same Dexscreener fetch, so an
+         answer never depends on the board having loaded first. */
+      var marketPromise = null;
+
+      function fetchLiveData() {
+        if (marketPromise) return marketPromise;
+        var url = "https://api.dexscreener.com/tokens/v1/base/" + TOKENS.map(function (t) { return t.address; }).join(",");
+        marketPromise = fetch(url, { headers: { "Accept": "application/json" } })
+          .then(function (res) {
+            if (!res.ok) throw new Error("Dexscreener returned HTTP " + res.status);
+            return res.json();
+          })
+          .then(function (pairs) {
+            if (!Array.isArray(pairs)) throw new Error("Unexpected response from Dexscreener");
+            var data = {};
+            var found = 0;
+            TOKENS.forEach(function (t) {
+              var p = pickBestPair(pairs, t.address);
+              if (p && p.priceUsd) {
+                data[t.ticker] = {
+                  price: parseFloat(p.priceUsd),
+                  change24: p.priceChange && typeof p.priceChange.h24 === "number" ? p.priceChange.h24 : null,
+                  volume24: p.volume && typeof p.volume.h24 === "number" ? p.volume.h24 : null,
+                  liquidity: p.liquidity && typeof p.liquidity.usd === "number" ? p.liquidity.usd : null,
+                  dex: p.dexId || "unknown"
+                };
+                found++;
+              } else {
+                data[t.ticker] = null;
+              }
+            });
+            if (found === 0) throw new Error("No live pairs returned");
+            liveData = data;
+            liveLoadedAt = new Date();
+            boardStatus.hidden = true;
+            lastUpdated.textContent = "Updated " + liveLoadedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+            renderBoard();
+            renderBriefing();
+            return data;
+          });
+        // Once this load settles, the next caller starts a fresh one.
+        marketPromise.then(
+          function () { marketPromise = null; },
+          function () { marketPromise = null; }
+        );
+        return marketPromise;
+      }
+
+      function fetchMarket() {
+        refreshBtn.disabled = true;
+        fetchLiveData()
+          .catch(function (err) {
+            showBoardError("⚠ Live prices could not be loaded (" + err.message + "). Rowan never shows made-up numbers — please check your connection and press Refresh to try again.");
+          })
+          .finally(function () { refreshBtn.disabled = false; });
+      }
+
+      refreshBtn.addEventListener("click", fetchMarket);
+
+      /* ============================================================
+         2. AGENT DAILY BRIEFING — computed only from live numbers.
+         ============================================================ */
+      var briefingMeta = document.getElementById("briefingMeta");
+      var briefingBody = document.getElementById("briefingBody");
+
+      function renderBriefingError() {
+        briefingMeta.textContent = "ROWAN'S BRIEFING — PAUSED";
+        briefingBody.replaceChildren(
+          el("p", "dim", "The briefing is paused because live data failed to load. Rowan only writes briefings from real numbers, so there is nothing to report until the market board loads again.")
+        );
+      }
+
+      function renderBriefing() {
+        if (!liveData) { renderBriefingError(); return; }
+        var rows = [];
+        TOKENS.forEach(function (t) { if (liveData[t.ticker]) rows.push({ t: t, d: liveData[t.ticker] }); });
+        if (!rows.length) { renderBriefingError(); return; }
+
+        var withChange = rows.filter(function (r) { return typeof r.d.change24 === "number"; });
+        var up = withChange.filter(function (r) { return r.d.change24 > 0; }).length;
+        var down = withChange.filter(function (r) { return r.d.change24 < 0; }).length;
+        var gainer = null, loser = null, traded = null;
+        withChange.forEach(function (r) {
+          if (!gainer || r.d.change24 > gainer.d.change24) gainer = r;
+          if (!loser || r.d.change24 < loser.d.change24) loser = r;
+        });
+        rows.forEach(function (r) {
+          if (typeof r.d.volume24 === "number" && (!traded || r.d.volume24 > traded.d.volume24)) traded = r;
+        });
+
+        briefingMeta.textContent = "GENERATED BY ROWAN FROM LIVE DATA · " + liveLoadedAt.toLocaleString([], { dateStyle: "medium", timeStyle: "short" }).toUpperCase();
+        briefingBody.replaceChildren();
+
+        var mood = up > down ? "a green day overall" : up < down ? "a red day overall" : "a split, even day";
+        briefingBody.appendChild(el("p", null,
+          "Hi! Rowan here. Of the " + rows.length + " tokenized stocks I follow on Base, " + up + " are up in the last 24 hours and " + down + " are down — so today is " + mood + "."));
+
+        if (withChange.length) {
+          var flat = withChange.length - up - down;
+          var breadth = el("div", "breadth");
+          [["b-up", up], ["b-flat", flat], ["b-down", down]].forEach(function (seg) {
+            if (!seg[1]) return;
+            var s = el("span", seg[0]);
+            s.style.width = (seg[1] / withChange.length * 100) + "%";
+            breadth.appendChild(s);
+          });
+          briefingBody.appendChild(breadth);
+          briefingBody.appendChild(el("p", "breadth-legend",
+            "Board breadth · 24h — ▲ " + up + " up · ▼ " + down + " down" + (flat ? " · " + flat + " flat" : "")));
+        }
+
+        if (gainer) briefingBody.appendChild(el("p", null,
+          "The biggest gainer is " + gainer.t.company + " (" + gainer.t.ticker + "), up " + fmtChange(gainer.d.change24) + " at " + fmtUSD(gainer.d.price) + ". A move like that usually means buyers were keen today — it does not mean the price will keep rising."));
+        if (loser && loser !== gainer) briefingBody.appendChild(el("p", null,
+          "The biggest loser is " + loser.t.company + " (" + loser.t.ticker + "), down " + fmtChange(loser.d.change24) + " at " + fmtUSD(loser.d.price) + ". One down day is normal for stocks; it is information, not a verdict."));
+        if (traded) briefingBody.appendChild(el("p", null,
+          "The most-traded stock is " + traded.t.company + " (" + traded.t.ticker + ") with " + fmtCompact(traded.d.volume24) + " of volume in 24 hours — that is where most of the action on Base was today."));
+        briefingBody.appendChild(el("p", "dim",
+          "That is the whole picture in plain words. Remember: this briefing explains public price data for learning only — it is not financial advice."));
+      }
+
+      /* ============================================================
+         3. ASK ROWAN — lookup in the live data only.
+         ============================================================ */
+      var askForm = document.getElementById("askForm");
+      var askInput = document.getElementById("askInput");
+      var askResult = document.getElementById("askResult");
+      var askBtn = document.getElementById("askBtn");
+
+      function findToken(raw) {
+        var q = raw.trim().toUpperCase();
+        if (!q) return null;
+        for (var i = 0; i < TOKENS.length; i++) {
+          if (TOKENS[i].ticker.toUpperCase() === q || TOKENS[i].base.toUpperCase() === q) return TOKENS[i];
+        }
+        return null;
+      }
+
+      function plainTake(t, d) {
+        var c = d.change24;
+        if (typeof c !== "number") return "Rowan has a live price for " + t.company + " but no 24-hour change figure right now, so the honest take is: not enough data to describe its day yet.";
+        if (c >= 5) return "That is a big up day for " + t.company + " — a move of " + fmtChange(c) + " in 24 hours is much larger than a normal day. Big up days feel exciting, but prices that jump fast can also fall fast. Exciting is not the same as safe.";
+        if (c <= -5) return "That is a big down day for " + t.company + " — a drop of " + fmtChange(c) + " in 24 hours is much larger than a normal day. One bad day does not decide a company's future, but it does show how quickly tokenized stock prices can move.";
+        if (c >= 2) return t.company + " had a clearly positive day, up " + fmtChange(c) + ". A steady gain like this is a good day without being extreme.";
+        if (c <= -2) return t.company + " had a clearly negative day, down " + fmtChange(c) + ". A drop like this is noticeable but well within what stocks do regularly.";
+        return "It was a calm day for " + t.company + " — the price moved only " + fmtChange(c) + " in 24 hours. Calm days are the most common kind, and nothing dramatic happened here.";
+      }
+
+      // Live data is keyed by the canonical ticker ("NVDAc") — match the
+      // key case-insensitively so casing can never make the lookup miss.
+      function liveEntry(t) {
+        if (!liveData) return null;
+        var liveKey = Object.keys(liveData).find(function (k) { return k.toUpperCase() === t.ticker.toUpperCase(); });
+        return liveKey ? liveData[liveKey] : null;
+      }
+
+      function renderAskAnswer(t, d) {
+        var head = el("p", null, "");
+        var strong = el("strong", null, t.company + " (" + t.ticker + ")");
+        head.appendChild(strong);
+        head.appendChild(document.createTextNode(" — live from Base DEX pools, updated " + liveLoadedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + "."));
+        askResult.appendChild(head);
+
+        var stats = el("div", "ask-stats");
+        [["Price", fmtUSD(d.price)],
+         ["24h change", fmtChange(d.change24)],
+         ["24h volume", fmtCompact(d.volume24)],
+         ["Liquidity", fmtCompact(d.liquidity)]].forEach(function (kv) {
+          var box = el("div", "ask-stat");
+          box.appendChild(el("span", "k", kv[0]));
+          var v = el("span", "v", kv[1]);
+          if (kv[0] === "24h change" && typeof d.change24 === "number") v.style.color = d.change24 > 0 ? "var(--up)" : d.change24 < 0 ? "var(--down)" : "var(--ink)";
+          box.appendChild(v);
+          stats.appendChild(box);
+        });
+        askResult.appendChild(stats);
+        if (typeof d.change24 === "number" || typeof d.volume24 === "number") {
+          var maxima = boardMaxima();
+          var askViz = el("div", "viz");
+          if (typeof d.change24 === "number") askViz.appendChild(buildMoveRow(d.change24, maxima.maxAbs));
+          if (typeof d.volume24 === "number") askViz.appendChild(buildVolRow(d.volume24, maxima.maxVol));
+          askResult.appendChild(askViz);
+        }
+        askResult.appendChild(el("p", "ask-take", "Rowan's take: " + plainTake(t, d)));
+      }
+
+      function askRowan() {
+        askResult.replaceChildren();
+        var raw = askInput.value;
+        if (!raw.trim()) {
+          askResult.appendChild(el("p", "ask-msg", "Type a ticker first — for example NVDA, AAPL or TSLA."));
+          return;
+        }
+        var t = findToken(raw);
+        if (!t) {
+          askResult.appendChild(el("p", "ask-msg", "“" + raw.trim().toUpperCase() + "” is not a tracked Coinbase tokenized stock on Base. Rowan follows: " + TOKENS.map(function (x) { return x.base; }).join(", ") + "."));
+          return;
+        }
+        var d = liveEntry(t);
+        if (d) { renderAskAnswer(t, d); return; }
+        // No usable live data for this ticker yet — fetch it now instead of
+        // dead-ending on a "not loaded" note. Every click ends in an answer,
+        // a clear "no live pair" note, or an error with a retry button.
+        // Still no invented numbers: if the fetch fails, Rowan says so.
+        askBtn.disabled = true;
+        askResult.appendChild(el("p", "ask-msg", "Rowan is fetching live data for " + t.company + " (" + t.ticker + ") from Base DEX pools…"));
+        fetchLiveData()
+          .then(function () {
+            askResult.replaceChildren();
+            var fresh = liveEntry(t);
+            if (!fresh) {
+              askResult.appendChild(el("p", "ask-msg", t.company + " (" + t.ticker + ") is tracked, but no live trading pair was found on Base DEX pools just now — so there is no honest price to show right now."));
+              return;
+            }
+            renderAskAnswer(t, fresh);
+          })
+          .catch(function (err) {
+            askResult.replaceChildren();
+            askResult.appendChild(el("p", "ask-msg", "Rowan could not load live data for " + t.company + " (" + (err && err.message ? err.message : "network error") + "). Rowan never makes up numbers — check your connection, then try again."));
+            var retry = el("button", "btn ask-retry", "↻ Try again");
+            retry.type = "button";
+            retry.addEventListener("click", function () { askRowan(); });
+            askResult.appendChild(retry);
+          })
+          .finally(function () { askBtn.disabled = false; });
+      }
+
+      askForm.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        askRowan();
+      });
+
+      /* ============================================================
+         4. ON-CHAIN WATCHLIST + CHECK-IN — Base Sepolia, ethers v6.
+         Live against the deployed RowanStocks contract above.
+         ============================================================ */
+      var connectBtn = document.getElementById("connectBtn");
+      var checkInBtn = document.getElementById("checkInBtn");
+      var saveWatchBtn = document.getElementById("saveWatchBtn");
+      var readWatchBtn = document.getElementById("readWatchBtn");
+      var walletStatus = document.getElementById("walletStatus");
+      var streakVal = document.getElementById("streakVal");
+      var totalVal = document.getElementById("totalVal");
+      var checkInMsg = document.getElementById("checkInMsg");
+      var watchMsg = document.getElementById("watchMsg");
+      var savedList = document.getElementById("savedList");
+      var watchChips = document.getElementById("watchChips");
+      var contractReady = typeof CONFIG.ROWAN_STOCKS_CONTRACT_ADDRESS === "string" && CONFIG.ROWAN_STOCKS_CONTRACT_ADDRESS.trim().length === 42;
+
+      TOKENS.forEach(function (t) {
+        var chip = el("button", "chip", t.base);
+        chip.type = "button";
+        chip.setAttribute("aria-pressed", "false");
+        chip.disabled = !contractReady;
+        chip.addEventListener("click", function () {
+          if (selectedWatch[t.ticker]) {
+            delete selectedWatch[t.ticker];
+            chip.setAttribute("aria-pressed", "false");
+          } else {
+            if (Object.keys(selectedWatch).length >= 10) {
+              setMsg(watchMsg, "A watchlist holds at most 10 tickers — unpick one first.", true);
+              return;
+            }
+            selectedWatch[t.ticker] = true;
+            chip.setAttribute("aria-pressed", "true");
+          }
+        });
+        watchChips.appendChild(chip);
+      });
+
+      function setMsg(node, text, isErr, isOk) {
+        node.textContent = text;
+        node.className = "tx-msg" + (isErr ? " err" : isOk ? " ok" : "");
+      }
+
+      if (!contractReady) {
+        document.getElementById("deployNotice").hidden = false;
+        [connectBtn, checkInBtn, saveWatchBtn, readWatchBtn].forEach(function (b) { b.disabled = true; });
+        walletStatus.textContent = "On-chain features are not live yet — the market board, briefing and Ask Rowan above all work without a wallet.";
+      } else {
+        var contractInfo = document.getElementById("contractInfo");
+        var contractLink = document.getElementById("contractLink");
+        contractLink.href = CONFIG.EXPLORER_URL + "/address/" + CONFIG.ROWAN_STOCKS_CONTRACT_ADDRESS;
+        contractLink.textContent = CONFIG.ROWAN_STOCKS_CONTRACT_ADDRESS;
+        contractInfo.hidden = false;
+      }
+
+      function requireContract() {
+        if (!contractReady) { setMsg(watchMsg, "The RowanStocks contract is not deployed yet.", true); return false; }
+        if (!wallet.contract) { setMsg(watchMsg, "Connect your wallet first.", true); return false; }
+        return true;
+      }
+
+      connectBtn.addEventListener("click", function () {
+        if (!contractReady) return;
+        if (!window.ethereum) { walletStatus.textContent = "No wallet found. Install MetaMask or Coinbase Wallet, then try again."; return; }
+        if (typeof ethers === "undefined") { walletStatus.textContent = "The ethers library failed to load — check your connection and reload."; return; }
+        walletStatus.textContent = "Connecting…";
+        var provider = new ethers.BrowserProvider(window.ethereum);
+        provider.send("eth_requestAccounts", [])
+          .then(function () { return provider.getNetwork(); })
+          .then(function (network) {
+            if (Number(network.chainId) !== CONFIG.CHAIN_ID) {
+              var chainIdHex = "0x" + CONFIG.CHAIN_ID.toString(16);
+              return window.ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: chainIdHex }]
+              }).catch(function (switchErr) {
+                // 4902: the wallet does not know Base Sepolia yet. This page
+                // ships no RPC endpoint of its own, so the network has to be
+                // added inside the wallet app (which uses its own RPC config).
+                if (switchErr && (switchErr.code === 4902 || switchErr.code === -32603)) {
+                  throw new Error("this wallet doesn't know Base Sepolia yet — add the Base Sepolia network (chain ID 84532) in your wallet app, then tap Connect wallet again.");
+                }
+                throw switchErr;
+              }).then(function () { return new ethers.BrowserProvider(window.ethereum); });
+            }
+            return provider;
+          })
+          .then(function (p) { wallet.provider = p; return p.getSigner(); })
+          .then(function (signer) {
+            wallet.signer = signer;
+            return signer.getAddress();
+          })
+          .then(function (addr) {
+            wallet.address = addr;
+            wallet.contract = new ethers.Contract(CONFIG.ROWAN_STOCKS_CONTRACT_ADDRESS, ROWAN_STOCKS_ABI, wallet.signer);
+            walletStatus.textContent = "Connected: " + addr + " · " + CONFIG.CHAIN_NAME + " (testnet)";
+            refreshStreak();
+            readWatchlist();
+          })
+          .catch(function (err) {
+            walletStatus.textContent = "Connection failed: " + (err && err.message ? err.message : err);
+          });
+      });
+
+      function refreshStreak() {
+        if (!wallet.contract || !wallet.address) return;
+        Promise.all([
+          wallet.contract.checkInStreak(wallet.address),
+          wallet.contract.checkInTotal(wallet.address)
+        ]).then(function (vals) {
+          streakVal.textContent = String(vals[0]);
+          totalVal.textContent = String(vals[1]);
+        }).catch(function () { /* streak display is best-effort */ });
+      }
+
+      checkInBtn.addEventListener("click", function () {
+        if (!requireContract()) return;
+        setMsg(checkInMsg, "Sending check-in transaction — confirm it in your wallet…");
+        wallet.contract.checkIn()
+          .then(function (tx) { setMsg(checkInMsg, "Transaction sent: " + tx.hash + " — waiting for confirmation…"); return tx.wait(); })
+          .then(function () { setMsg(checkInMsg, "Checked in. See you tomorrow to keep the streak going!", false, true); refreshStreak(); })
+          .catch(function (err) { setMsg(checkInMsg, "Check-in failed: " + (err && err.shortMessage ? err.shortMessage : err.message || err), true); });
+      });
+
+      saveWatchBtn.addEventListener("click", function () {
+        if (!requireContract()) return;
+        var tickers = Object.keys(selectedWatch);
+        if (!tickers.length) { setMsg(watchMsg, "Pick at least one ticker above first.", true); return; }
+        setMsg(watchMsg, "Saving " + tickers.length + " ticker(s) on-chain — confirm in your wallet…");
+        wallet.contract.setWatchlist(tickers)
+          .then(function (tx) { setMsg(watchMsg, "Transaction sent: " + tx.hash + " — waiting for confirmation…"); return tx.wait(); })
+          .then(function () { setMsg(watchMsg, "Watchlist saved on Base Sepolia.", false, true); readWatchlist(); })
+          .catch(function (err) { setMsg(watchMsg, "Save failed: " + (err && err.shortMessage ? err.shortMessage : err.message || err), true); });
+      });
+
+      function readWatchlist() {
+        if (!wallet.contract || !wallet.address) return;
+        wallet.contract.getWatchlist(wallet.address)
+          .then(function (list) {
+            savedList.replaceChildren();
+            if (!list || !list.length) {
+              savedList.appendChild(document.createTextNode("On-chain watchlist: empty — nothing saved yet."));
+            } else {
+              savedList.appendChild(document.createTextNode("On-chain watchlist: "));
+              savedList.appendChild(el("span", "mono", list.join(", ")));
+            }
+          })
+          .catch(function (err) { setMsg(watchMsg, "Could not read watchlist: " + (err.message || err), true); });
+      }
+      readWatchBtn.addEventListener("click", function () { if (requireContract()) readWatchlist(); });
+
+      /* ---------------- Boot: load live data, then auto-refresh ---------------- */
+      fetchMarket();
+      setInterval(fetchMarket, CONFIG.AUTO_REFRESH_MS);
+    </script>
+  </body>
+</html>
