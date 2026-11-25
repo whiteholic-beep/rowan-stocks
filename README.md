@@ -62,3 +62,21 @@ limits, agent-only briefings).
 - No claim of rights in any underlying public company.
 - Prizes (if won) are paid in USDC on Base to the wallet Haqi provides at
   submission; winner verification (ID/age/residence, W-9/W-8) is Haqi's step.
+
+## Who counts as an external user (traction labelling)
+
+- **External user:** a wallet that is not a team wallet, controlled by a real
+  person other than the builder team, that performed on-chain actions on
+  Rowan Stocks (check-in, watchlist, rule, swap) on Base Sepolia.
+- **One real person = one wallet.** Multiple wallets controlled by the same
+  person count as one user.
+- **Categories shown separately on the proof page:**
+  (a) team wallets; (b) external wallets funded by the team (test ETH sent
+  by the team); (c) independent external wallets (funded by the user via a
+  faucet). Team wallets are labelled as team and never count as traction.
+- **Active external user:** an external wallet in category (b) or (c) with
+  2+ on-chain actions. Wallets with a single action are listed, not counted
+  as active.
+- **Known team wallets:** deployer `0xd482B6572917b6d9679Bbc3aF55FCbfa8743BBf0`
+  (Base Sepolia). Any other wallet the builder uses must be declared as team
+  on the proof page before it is counted anywhere.
