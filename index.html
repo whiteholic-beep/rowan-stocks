@@ -96,6 +96,15 @@
       .risk p { margin: 0; color: var(--ink); font-size: 15px; line-height: 24px; }
       .risk p b { color: var(--blue-ink); }
 
+      /* ---------- Testnet headline strip: loud red, first thing on the page ---------- */
+      .testnet-strip {
+        background: #c81e1e; color: #fff;
+        font-weight: 800; text-align: center;
+        font-size: 15px; line-height: 22px; letter-spacing: 0.03em;
+        padding: 11px 14px; margin-bottom: 18px;
+        border-radius: var(--radius);
+      }
+
       /* ---------- Header: drawing title ---------- */
       header.page-head { border-bottom: 1px solid rgba(255, 255, 255, 0.6); padding-bottom: 22px; }
       .brand-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -432,6 +441,7 @@
   </head>
   <body>
     <div class="wrap">
+      <div class="testnet-strip" role="note">TESTNET ONLY — Demo on Base Sepolia · Mock tokens, no real money, no real shares</div>
 
       <div class="coord-bar" aria-hidden="true"><span class="plus">+</span><span>Sheet RS—01</span><span>Grid 28 / 140</span><span>Datum · Base</span><span class="spacer"></span><span>Units · USD</span><span>Scale · NTS</span><span class="plus">+</span></div>
 
