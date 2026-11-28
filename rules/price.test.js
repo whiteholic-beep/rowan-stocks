@@ -76,3 +76,57 @@ describe('triggerPrice', () => {
     assert.equal(price.triggerPrice('150', 5), null);
   });
 });
+
+describe('takeProfitPrice', () => {
+  it('computes reference plus the rise (150 at 50% -> 225)', () => {
+    assert.equal(price.takeProfitPrice(150, 50), 225);
+  });
+
+  it('handles a 100% rise as double', () => {
+    assert.equal(price.takeProfitPrice(150, 100), 300);
+  });
+
+  it('returns null on bad input', () => {
+    assert.equal(price.takeProfitPrice(0, 50), null);
+    assert.equal(price.takeProfitPrice(-10, 50), null);
+    assert.equal(price.takeProfitPrice(150, 0), null);
+    assert.equal(price.takeProfitPrice(150, 101), null);
+    assert.equal(price.takeProfitPrice('150', 50), null);
+  });
+});
+
+describe('triggerPrices', () => {
+  it('returns both triggers for a paired rule (150, SL 5 / TP 50)', () => {
+    const rule = {
+      type: 'paired-sell', stopLossPct: 5, takeProfitPct: 50,
+      reference: 'current', language: 'id'
+    };
+    assert.deepEqual(price.triggerPrices(150, rule), { stopLoss: 142.5, takeProfit: 225 });
+  });
+
+  it('returns only the stop-loss for an SL-only rule', () => {
+    const rule = { type: 'paired-sell', stopLossPct: 5, takeProfitPct: null };
+    assert.deepEqual(price.triggerPrices(150, rule), { stopLoss: 142.5, takeProfit: null });
+  });
+
+  it('returns only the take-profit for a TP-only rule', () => {
+    const rule = { type: 'paired-sell', stopLossPct: null, takeProfitPct: 50 };
+    assert.deepEqual(price.triggerPrices(150, rule), { stopLoss: null, takeProfit: 225 });
+  });
+
+  it('understands a legacy v1 rule (thresholdPct = stop-loss only)', () => {
+    const legacy = { type: 'stop-loss-sell', thresholdPct: 5 };
+    assert.deepEqual(price.triggerPrices(150, legacy), { stopLoss: 142.5, takeProfit: null });
+  });
+
+  it('returns null on a bad reference price, a bad rule, or no exits', () => {
+    const rule = { type: 'paired-sell', stopLossPct: 5, takeProfitPct: 50 };
+    assert.equal(price.triggerPrices(0, rule), null);
+    assert.equal(price.triggerPrices(150, null), null);
+    assert.equal(price.triggerPrices(150, { type: 'buy-the-dip' }), null);
+    assert.equal(
+      price.triggerPrices(150, { type: 'paired-sell', stopLossPct: null, takeProfitPct: null }),
+      null
+    );
+  });
+});

@@ -82,10 +82,60 @@
     return referencePriceUsd * (1 - thresholdPct / 100);
   }
 
+  /**
+   * Take-profit trigger price: reference price plus the rise.
+   * Pure arithmetic, e.g. $150 with a 50% take-profit -> $225.00.
+   * Returns null on bad input.
+   */
+  function takeProfitPrice(referencePriceUsd, takeProfitPct) {
+    if (typeof referencePriceUsd !== 'number' || !isFinite(referencePriceUsd) || referencePriceUsd <= 0) {
+      return null;
+    }
+    if (typeof takeProfitPct !== 'number' || !isFinite(takeProfitPct) || takeProfitPct <= 0 || takeProfitPct > 100) {
+      return null;
+    }
+    return referencePriceUsd * (1 + takeProfitPct / 100);
+  }
+
+  /**
+   * Both trigger prices for a paired-sell rule, from one reference price.
+   * Accepts the current shape (stopLossPct / takeProfitPct) and the
+   * legacy v1 shape (thresholdPct = stop-loss only).
+   * Returns { stopLoss: number|null, takeProfit: number|null }, or null
+   * when the reference price or the rule is unusable.
+   */
+  function triggerPrices(referencePriceUsd, rule) {
+    if (typeof referencePriceUsd !== 'number' || !isFinite(referencePriceUsd) || referencePriceUsd <= 0) {
+      return null;
+    }
+    if (!rule || typeof rule !== 'object') return null;
+    var stopLossPct = null;
+    var takeProfitPct = null;
+    if (rule.type === 'paired-sell') {
+      stopLossPct = rule.stopLossPct;
+      takeProfitPct = rule.takeProfitPct;
+    } else if (rule.type === 'stop-loss-sell' && typeof rule.thresholdPct === 'number') {
+      stopLossPct = rule.thresholdPct;
+    } else {
+      return null;
+    }
+    var out = { stopLoss: null, takeProfit: null };
+    if (stopLossPct !== null && stopLossPct !== undefined) {
+      out.stopLoss = triggerPrice(referencePriceUsd, stopLossPct);
+    }
+    if (takeProfitPct !== null && takeProfitPct !== undefined) {
+      out.takeProfit = takeProfitPrice(referencePriceUsd, takeProfitPct);
+    }
+    if (out.stopLoss === null && out.takeProfit === null) return null;
+    return out;
+  }
+
   return {
     REAL_NVDAC: REAL_NVDAC,
     tokenUrl: tokenUrl,
     extractPrice: extractPrice,
-    triggerPrice: triggerPrice
+    triggerPrice: triggerPrice,
+    takeProfitPrice: takeProfitPrice,
+    triggerPrices: triggerPrices
   };
 });

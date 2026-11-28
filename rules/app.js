@@ -103,9 +103,16 @@
       if (rule.reference === 'entry') details.push('Reference is your buy price. Tahap 4 will ask for it (or read it from your purchase history) when the monitor goes live.');
       $('parseDetails').textContent = details.join(' ');
       if (lastReferencePrice !== null) {
-        var trigger = Price.triggerPrice(lastReferencePrice, rule.thresholdPct);
-        $('parseTrigger').textContent = 'At the current reference price of ' + formatUsd(lastReferencePrice) +
-          ', this rule triggers at ' + formatUsd(trigger) + '.';
+        var triggers = Price.triggerPrices(lastReferencePrice, rule);
+        if (triggers) {
+          var bits = [];
+          if (triggers.stopLoss !== null) bits.push('stop-loss triggers at ' + formatUsd(triggers.stopLoss));
+          if (triggers.takeProfit !== null) bits.push('take-profit triggers at ' + formatUsd(triggers.takeProfit));
+          $('parseTrigger').textContent = 'At the current reference price of ' + formatUsd(lastReferencePrice) +
+            ', this rule ' + bits.join(' and ') + '.';
+        } else {
+          $('parseTrigger').textContent = 'Trigger price will show here once the live reference price loads.';
+        }
       } else {
         $('parseTrigger').textContent = 'Trigger price will show here once the live reference price loads.';
       }
@@ -137,8 +144,15 @@
       }
       var meta = document.createElement('div');
       meta.className = 'r-meta';
+      var exits = [];
+      var sl = (rule.stopLossPct !== undefined && rule.stopLossPct !== null)
+        ? rule.stopLossPct : rule.thresholdPct;
+      var tp = (rule.takeProfitPct !== undefined && rule.takeProfitPct !== null)
+        ? rule.takeProfitPct : null;
+      if (sl !== null && sl !== undefined) exits.push('SL ' + sl + '%');
+      if (tp !== null && tp !== undefined) exits.push('TP ' + tp + '%');
       var parts = [
-        'threshold ' + rule.thresholdPct + '%',
+        exits.join(' · ') || 'no exits',
         'reference: ' + rule.reference,
         'max sell: ' + (rule.maxAmountTokens !== undefined ? rule.maxAmountTokens + ' tNVDAc' : 'whole balance'),
         'status: ' + rule.status,

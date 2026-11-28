@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light" />
     <link rel="icon" href="data:," />
-    <title>Rowan Stocks — set a stop-loss rule</title>
+    <title>Rowan Stocks — set stop-loss &amp; take-profit rules</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -470,7 +470,7 @@
       <div class="coord-bar">
         <span class="plus">+</span><span>Rowan Stocks — Rules</span>
         <span>Base Sepolia · Chain 84532</span>
-        <span>Tahap 3 · Web app</span>
+        <span>Tahap 3.5 · Web app</span>
         <span class="spacer"></span>
         <span>Testnet only</span>
       </div>
@@ -481,9 +481,9 @@
       </div>
 
       <header class="page-head">
-        <div class="brand-row"><h1>Set a <span class="gold">stop-loss</span> rule</h1></div>
-        <p class="tagline">Write a rule in plain words — Indonesian or English — and Rowan turns it into a structured stop-loss for tNVDAc. You confirm it before it goes live, and you sign every swap yourself.</p>
-        <span class="chain-pill">Base Sepolia · <b>tNVDAc (mock)</b> · stop-loss sell only</span>
+        <div class="brand-row"><h1>Set <span class="gold">stop-loss</span> &amp; <span class="gold">take-profit</span> rules</h1></div>
+        <p class="tagline">Write a rule in plain words — Indonesian or English — and Rowan turns it into a structured stop-loss and take-profit pair for tNVDAc. One rule, two exits: whichever trigger hits first sells. You confirm it before it goes live, and you sign every swap yourself.</p>
+        <span class="chain-pill">Base Sepolia · <b>tNVDAc (mock)</b> · stop-loss + take-profit</span>
         <div class="dim-line">JS-only agent · no AI · no custody · testnet only</div>
       </header>
 
@@ -504,7 +504,7 @@
               <div class="price-value" id="refPrice">–</div>
               <div class="price-meta" id="refPriceMeta">Loading live price from Dexscreener…</div>
             </div>
-            <div class="price-note">Trigger price = reference price − your drop %. Example: $150 with a 5% rule triggers at $142.50.</div>
+            <div class="price-note">Stop-loss triggers at reference − drop %; take-profit at reference + rise %. Example: $150 with 5% SL triggers at $142.50; with 50% TP at $225.00.</div>
           </div>
         </div>
       </section>
@@ -512,15 +512,17 @@
       <section aria-labelledby="rule-h">
         <div class="schem-divider" aria-hidden="true"><span class="sd-plus l">+</span><span class="sd-plus r">+</span></div>
         <div class="sec-head"><h2 id="rule-h"><span class="num">02</span>Write your rule</h2></div>
-        <p class="sec-sub">One rule type for now: <b>stop-loss sell</b> of tNVDAc when the price drops X% from a reference price. Buy rules and other stocks are not supported yet — the parser will tell you so in plain words.</p>
+        <p class="sec-sub">One rule, two exits: <b>stop-loss</b> sells tNVDAc when the price drops X% from a reference price, <b>take-profit</b> sells when it rises Y% — either side optional, at least one required. Buy rules and other stocks are not supported yet — the parser will tell you so in plain words.</p>
         <div class="card">
           <label class="field-label" for="ruleInput">Your rule, in plain words</label>
           <input id="ruleInput" type="text" autocomplete="off" spellcheck="false" placeholder='Jual tNVDAc kalau turun 5% dari harga hari ini' aria-label="Rule in plain words" />
           <div class="examples">
             <span class="ex-label">Try:</span>
             <button class="chip-btn" type="button" data-example="Jual tNVDAc kalau turun 5% dari harga hari ini">Jual tNVDAc kalau turun 5% dari harga hari ini</button>
+            <button class="chip-btn" type="button" data-example="Jual tNVDAc kalau turun 5% atau naik 50% dari harga sekarang">Jual tNVDAc kalau turun 5% atau naik 50% dari harga sekarang</button>
             <button class="chip-btn" type="button" data-example="Jual NVDA kalau turun 10% dari harga beli">Jual NVDA kalau turun 10% dari harga beli</button>
             <button class="chip-btn" type="button" data-example="Sell tNVDAc if it drops 7,5% from today's price">Sell tNVDAc if it drops 7,5% from today's price</button>
+            <button class="chip-btn" type="button" data-example="Sell tNVDAc if it rises 50% from today's price">Sell tNVDAc if it rises 50% from today's price</button>
           </div>
           <div class="btn-row">
             <button class="btn btn-gold" id="parseBtn" type="button">Check my rule</button>
@@ -548,7 +550,7 @@
         <p class="sec-sub">Rules are saved in this browser only (localStorage) for this demo stage. Nothing is sent to a server. The price monitor that watches them goes live in Tahap 4.</p>
         <div class="card">
           <div id="rulesList"></div>
-          <p class="dim" id="rulesEmpty">No rules yet. Write one above — for example “Jual tNVDAc kalau turun 5% dari harga hari ini”.</p>
+          <p class="dim" id="rulesEmpty">No rules yet. Write one above — for example “Jual tNVDAc kalau turun 5% atau naik 50% dari harga sekarang”.</p>
         </div>
       </section>
 
