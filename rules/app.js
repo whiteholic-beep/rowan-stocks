@@ -99,7 +99,7 @@
       $('parseSentence').textContent = sentence;
       var details = [];
       if (!rule.tokenExplicit) details.push('Token not named — defaulted to tNVDAc (the only supported stock).');
-      if (!rule.referenceExplicit) details.push('Reference not named — defaulted to today\'s price. If you meant your buy price, write “dari harga beli”.');
+      if (!rule.referenceExplicit) details.push('Reference not named — defaulted to today\'s price. If you meant your buy price, write “from the buy price”.');
       if (rule.reference === 'entry') details.push('Reference is your buy price. Tahap 4 will ask for it (or read it from your purchase history) when the monitor goes live.');
       $('parseDetails').textContent = details.join(' ');
       if (lastReferencePrice !== null) {

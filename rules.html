@@ -482,7 +482,7 @@
 
       <header class="page-head">
         <div class="brand-row"><h1>Set <span class="gold">stop-loss</span> &amp; <span class="gold">take-profit</span> rules</h1></div>
-        <p class="tagline">Write a rule in plain words — Indonesian or English — and Rowan turns it into a structured stop-loss and take-profit pair for tNVDAc. One rule, two exits: whichever trigger hits first sells. You confirm it before it goes live, and you sign every swap yourself.</p>
+        <p class="tagline">Write a rule in plain English — or Indonesian — and Rowan turns it into a structured stop-loss and take-profit pair for tNVDAc. One rule, two exits: whichever trigger hits first sells. You confirm it before it goes live, and you sign every swap yourself.</p>
         <span class="chain-pill">Base Sepolia · <b>tNVDAc (mock)</b> · stop-loss + take-profit</span>
         <div class="dim-line">JS-only agent · no AI · no custody · testnet only</div>
       </header>
@@ -515,15 +515,17 @@
         <p class="sec-sub">One rule, two exits: <b>stop-loss</b> sells tNVDAc when the price drops X% from a reference price, <b>take-profit</b> sells when it rises Y% — either side optional, at least one required. Buy rules and other stocks are not supported yet — the parser will tell you so in plain words.</p>
         <div class="card">
           <label class="field-label" for="ruleInput">Your rule, in plain words</label>
-          <input id="ruleInput" type="text" autocomplete="off" spellcheck="false" placeholder='Jual tNVDAc kalau turun 5% dari harga hari ini' aria-label="Rule in plain words" />
+          <input id="ruleInput" type="text" autocomplete="off" spellcheck="false" placeholder="Sell tNVDAc if it drops 5% or rises 50% from today's price" aria-label="Rule in plain words" />
           <div class="examples">
             <span class="ex-label">Try:</span>
-            <button class="chip-btn" type="button" data-example="Jual tNVDAc kalau turun 5% dari harga hari ini">Jual tNVDAc kalau turun 5% dari harga hari ini</button>
-            <button class="chip-btn" type="button" data-example="Jual tNVDAc kalau turun 5% atau naik 50% dari harga sekarang">Jual tNVDAc kalau turun 5% atau naik 50% dari harga sekarang</button>
-            <button class="chip-btn" type="button" data-example="Jual NVDA kalau turun 10% dari harga beli">Jual NVDA kalau turun 10% dari harga beli</button>
+            <button class="chip-btn" type="button" data-example="Sell tNVDAc if it drops 5% or rises 50% from today's price">Sell tNVDAc if it drops 5% or rises 50% from today's price</button>
             <button class="chip-btn" type="button" data-example="Sell tNVDAc if it drops 7,5% from today's price">Sell tNVDAc if it drops 7,5% from today's price</button>
             <button class="chip-btn" type="button" data-example="Sell tNVDAc if it rises 50% from today's price">Sell tNVDAc if it rises 50% from today's price</button>
+            <button class="chip-btn" type="button" data-example="Jual tNVDAc kalau turun 5% atau naik 50% dari harga sekarang">Jual tNVDAc kalau turun 5% atau naik 50% dari harga sekarang</button>
+            <button class="chip-btn" type="button" data-example="Jual tNVDAc kalau turun 5% dari harga hari ini">Jual tNVDAc kalau turun 5% dari harga hari ini</button>
+            <button class="chip-btn" type="button" data-example="Jual NVDA kalau turun 10% dari harga beli">Jual NVDA kalau turun 10% dari harga beli</button>
           </div>
+          <p class="dim" style="margin-top:10px">Also understands Indonesian — Bahasa Indonesia juga bisa.</p>
           <div class="btn-row">
             <button class="btn btn-gold" id="parseBtn" type="button">Check my rule</button>
           </div>
@@ -550,7 +552,7 @@
         <p class="sec-sub">Rules are saved in this browser only (localStorage) for this demo stage. Nothing is sent to a server. The price monitor that watches them goes live in Tahap 4.</p>
         <div class="card">
           <div id="rulesList"></div>
-          <p class="dim" id="rulesEmpty">No rules yet. Write one above — for example “Jual tNVDAc kalau turun 5% atau naik 50% dari harga sekarang”.</p>
+          <p class="dim" id="rulesEmpty">No rules yet. Write one above — for example “Sell tNVDAc if it drops 5% or rises 50% from today's price”.</p>
         </div>
       </section>
 
