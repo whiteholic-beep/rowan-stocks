@@ -103,6 +103,58 @@ node --test rules/parser.test.js
 
 Tes memakai test runner bawaan Node — tanpa dependensi baru.
 
+## Tahap 3 — web app (`rules.html`)
+
+Halaman pembuatan aturan, gaya sama dengan situs utama (Base-blue blueprint).
+Buka `rules.html` di browser (atau sajikan dari repo) — tidak ada build step.
+
+- **Tulis aturan** (`rules/app.js` + `rules/parser.js`): ketik kalimat biasa
+  (Indonesia/Inggris), parser Tahap 2 mengubahnya jadi aturan terstruktur.
+  Hasilnya tampil sebagai satu kalimat konfirmasi (`describeRule`) plus
+  catatan default (token/acuan yang tidak disebut) dan harga trigger yang
+  dihitung dari harga acuan live. Error parser tampil apa adanya, dalam
+  bahasa kalimatnya.
+- **Konfirmasi + batas nominal:** sebelum aturan aktif, pengguna menekan
+  "Confirm & activate rule" dan menetapkan **max tNVDAc yang boleh dijual**
+  (default 100, maks 1.000). Aturan aktif tersimpan di localStorage browser
+  saja (`rules/storage.js`) — tidak ada server, tidak ada kunci privat.
+- **Harga acuan live** (`rules/price.js`): harga NVDAc asli di Base mainnet
+  dari API publik Dexscreener (read-only). Harga ini yang dipakai trigger;
+  token yang di-swap di Sepolia adalah mock — UI menulis perbedaan ini
+  dengan jelas.
+- **Mock faucet** (`rules/faucet.js`): tombol "Mint 100 test tNVDAc"
+  memanggil `mint()` di kontrak mock lewat wallet pengguna sendiri
+  (pengguna tanda tangan di wallet; Rowan tidak pernah pegang kunci).
+- **Panduan 3 langkah** di halaman: ambil ETH Sepolia dari faucet (urutan
+  thirdweb → Chainlink → CDP → Alchemy terakhir), connect wallet +
+  check-in, mint tNVDAc + buat aturan.
+
+### Mock tNVDAc — deployment (Base Sepolia, chain 84532)
+
+- Kontrak: `contracts/MockToken.sol` (ERC-20, 8 desimal, open mint
+  maks 1.000 token per panggilan, tanpa owner/admin/pause/fee).
+- Alamat: `0x7D8c0fe1d88D772441ccc7b0F27fcA0b8a89A775`
+- Deploy tx: `0x618628f62fb6480879149c55783d57b525c4b893551b2cb3498b146ecbb53bc2`
+- Explorer: https://sepolia.basescan.org/address/0x7D8c0fe1d88D772441ccc7b0F27fcA0b8a89A775
+- Source verification: **Pass - Verified** (v0.8.24, optimizer 200, cancun,
+  MIT). Flattened source: `deployments/MockToken.flattened.sol`.
+- Deployer: `0xd482B6572917b6d9679Bbc3aF55FCbfa8743BBf0` (testnet only).
+- **TEST TOKEN ONLY** — bukan NVDAc asli (B20 hanya ada di mainnet).
+  Tidak bernilai, tidak ada klaim atas saham apa pun.
+
+### Tes Tahap 3
+
+```bash
+node --test rules/parser.test.js rules/storage.test.js rules/price.test.js rules/faucet.test.js
+# 69 tes lolos (35 parser + 34 baru: storage 18, price 8, faucet 8 — hitung per 28 Nov 2026)
+```
+
+`rules/app.js` (glue browser) tidak punya unit test — logikanya yang
+murni sudah dipindah ke `storage.js` / `price.js` / `faucet.js` supaya
+bisa dites tanpa wallet dan tanpa jaringan. Smoke test UMD: keempat modul
+dimuat di `vm` dengan `window` palsu dan `describeRule` + `addRule` +
+`buildMintCall` jalan (cek manual saat Tahap 3 selesai).
+
 ## Catatan desain (keputusan yang diambil)
 
 - **Harga acuan default = harga hari ini (`current`).** Alasannya: saat

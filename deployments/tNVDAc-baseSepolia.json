@@ -1,0 +1,13 @@
+{
+  "network": "Base Sepolia",
+  "chainId": 84532,
+  "contract": "MockToken",
+  "symbol": "tNVDAc",
+  "name": "Test NVDA (Mock)",
+  "decimals": 8,
+  "address": "0x7D8c0fe1d88D772441ccc7b0F27fcA0b8a89A775",
+  "deployTx": "0x618628f62fb6480879149c55783d57b525c4b893551b2cb3498b146ecbb53bc2",
+  "deployer": "0xd482B6572917b6d9679Bbc3aF55FCbfa8743BBf0",
+  "deployedAt": "2026-11-28T03:34:34.453Z",
+  "note": "TEST TOKEN ONLY — mock NVDA for the Rowan Stocks stop-loss demo. No value, not the real B20 NVDAc."
+}

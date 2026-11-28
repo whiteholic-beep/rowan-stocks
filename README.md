@@ -30,6 +30,14 @@ plain language:
   agent briefing log. No owner/admin/withdraw/pause. Testnet only.
 - `index.html` — the live dApp (single-file build of the public site).
   Live data via Dexscreener batch API.
+- **Tahap 2 — rule parser** (`rules/parser.js`, branch `tahap2-parser`):
+  plain words in, structured stop-loss rule out. Pure JS, 35 tests.
+- **Tahap 3 — rule web app** (`rules.html`, branch `tahap3-webapp`):
+  write a rule in plain words, check it, confirm it with a max-amount cap,
+  mint test tNVDAc from the mock faucet, 3-step start guide. Rules live in
+  the browser's localStorage only. Mock tNVDAc `0x7D8c0fe1d88D772441ccc7b0F27fcA0b8a89A775`
+  on Base Sepolia (source verified on Basescan) — test token only, not the
+  real B20 NVDAc. Tests: `node --test rules/*.test.js` (69 passing).
 
 ## Contract (Base Sepolia testnet, chain 84532)
 
